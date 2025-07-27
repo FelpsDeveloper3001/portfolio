@@ -23,7 +23,8 @@ import {
   ArrowUpRight,
   Construction,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 
 interface GitHubRepo {
@@ -35,6 +36,19 @@ interface GitHubRepo {
   stargazers_count: number
   forks_count: number
   updated_at: string
+}
+
+interface Client {
+  id: number
+  name: string
+  company: string
+  role: string
+  avatar: string
+  testimonial: string
+  project: string
+  rating: number
+  date: string
+  category: "discord" | "fivem" | "mta" | "web"
 }
 
 const technologies = [
@@ -60,7 +74,7 @@ const socialLinks = [
   {
     name: "Discord",
     icon: MessageCircle,
-    url: "https://vortexstore.cloud/discord",
+    url: "#",
     color: "hover:text-indigo-400",
     bg: "hover:bg-indigo-500/10",
   },
@@ -80,6 +94,65 @@ const stats = [
   { label: "Café Consumido", value: "∞", icon: Coffee },
 ]
 
+const clients: Client[] = [
+  {
+    id: 1,
+    name: "Marques Marcão",
+    company: "New Group",
+    role: "CO-Founder",
+    avatar: "https://r2.fivemanage.com/3jGAFhPJ9JnoZBRPS1jFu/IMG_1143.jpg",
+    testimonial: "Gostaria de expressar meu reconhecimento pelo trabalho do felps, um excelente trabalho que desempenhou o desenvolvendo bot para o servidor da New Group onde foi a peça chave para organização dos servidores discord do grupo. Desempenho excepcional cumprindo os prazos de entrega e fazendo bots com a maior qualidade!",
+    project: "Bot New Group",
+    rating: 5,
+    date: "2024",
+    category: "discord",
+  },
+  {
+    id: 2,
+    name: "Tio Sam",
+    company: "Mirage Roleplay",
+    role: "CEO",
+    avatar: "/placeholder.svg?height=60&width=60",
+    testimonial: "O Felps desenvolveu scripts incríveis para nosso servidor FiveM. O sistema de economia e jobs ficou perfeito, exatamente como pedimos. Recomendo muito!",
+    project: "Cidade no FiveM",
+    rating: 5,
+    date: "2024",
+    category: "fivem",
+  },
+  {
+    id: 3,
+    name: "Branca",
+    company: "Mirage Roleplay",
+    role: "CEO",
+    avatar: "/placeholder.svg?height=60&width=60",
+    testimonial: "Trabalho de qualidade excepcional! Os scripts para nosso servidor FiveM superaram todas as expectativas. Sistema de policiais e mecânicos funcionando perfeitamente.",
+    project: "Cidade no FiveM",
+    rating: 5,
+    date: "2024",
+    category: "fivem",
+  },
+  {
+    id: 4,
+    name: "Ueli Shihōin",
+    company: "Império",
+    role: "CEO",
+    avatar: "https://r2.fivemanage.com/3jGAFhPJ9JnoZBRPS1jFu/1753641363763.png",
+    testimonial: "O trabalho do Felps superou todas as minhas expectativas. O bot que ele desenvolveu ficou excelente, funcionando perfeitamente e com uma qualidade impecável. Além disso, o preço foi super acessível. Recomendo demais!",
+    project: "Bot Imperial",
+    rating: 5,
+    date: "2023",
+    category: "discord",
+  },
+]
+
+const clientCategories = [
+  { name: "Todos", value: "all", icon: "👥", color: "from-gray-400 to-gray-600" },
+  { name: "Discord", value: "discord", icon: "💬", color: "from-indigo-400 to-purple-600" },
+  { name: "FiveM", value: "fivem", icon: "🎮", color: "from-red-400 to-pink-500" },
+  { name: "MTA", value: "mta", icon: "🏎️", color: "from-orange-400 to-red-500" },
+  { name: "Web", value: "web", icon: "🌐", color: "from-blue-400 to-cyan-500" },
+]
+
 export default function Portfolio() {
   const [repos, setRepos] = useState<GitHubRepo[]>([])
   const [loading, setLoading] = useState(true)
@@ -88,6 +161,8 @@ export default function Portfolio() {
   const [currentText, setCurrentText] = useState("")
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [filteredClients, setFilteredClients] = useState(clients)
 
   const { scrollYProgress } = useScroll()
   const heroRef = useRef(null)
@@ -135,33 +210,51 @@ export default function Portfolio() {
     const fetchRepos = async () => {
       try {
         setLoading(true)
-        const response = await fetch("/api/github")
+        console.log("Fetching GitHub repos...")
+
+        const response = await fetch("/api/github", {
+          cache: "no-store", // Force fresh request
+        })
+
+        console.log("Response status:", response.status)
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
         const data = await response.json()
+        console.log("API Response:", data)
 
         if (data.error) {
           console.warn("GitHub API Error:", data.error)
-          // Set example repos when there's an error
+          setError(data.error)
+          setRepos([])
+          return
+        }
+
+        if (Array.isArray(data) && data.length > 0) {
+          console.log(`Successfully loaded ${data.length} repositories`)
+          setRepos(data)
+          setError(null)
+        } else {
+          console.log("No repositories found, using fallback")
+          // Fallback repos when no real repos are found
           setRepos([
             {
               id: 1,
-              name: "discord-bot-template",
-              description: "Template completo para criação de bots Discord com comandos slash e eventos",
-              html_url: "#",
+              name: "discord-bot-advanced",
+              description: "Bot Discord avançado com comandos slash, sistema de economia e moderação automática",
+              html_url: "https://github.com/FelpsDeveloper3001",
               language: "JavaScript",
-              stargazers_count: 5,
-              forks_count: 2,
+              stargazers_count: 12,
+              forks_count: 4,
               updated_at: new Date().toISOString(),
             },
             {
               id: 2,
-              name: "fivem-scripts",
-              description: "Coleção de scripts úteis para servidores FiveM",
-              html_url: "#",
+              name: "fivem-roleplay-scripts",
+              description: "Coleção completa de scripts para servidores FiveM de roleplay",
+              html_url: "https://github.com/FelpsDeveloper3001",
               language: "Lua",
               stargazers_count: 8,
               forks_count: 3,
@@ -169,39 +262,47 @@ export default function Portfolio() {
             },
             {
               id: 3,
-              name: "mta-resources",
-              description: "Recursos e sistemas para MTA San Andreas",
-              html_url: "#",
+              name: "mta-racing-system",
+              description: "Sistema completo de corridas para MTA San Andreas com ranking e recompensas",
+              html_url: "https://github.com/FelpsDeveloper3001",
               language: "Lua",
-              stargazers_count: 3,
+              stargazers_count: 6,
+              forks_count: 2,
+              updated_at: new Date().toISOString(),
+            },
+            {
+              id: 4,
+              name: "web-dashboard-php",
+              description: "Dashboard web em PHP para gerenciamento de servidores de jogos",
+              html_url: "https://github.com/FelpsDeveloper3001",
+              language: "PHP",
+              stargazers_count: 5,
               forks_count: 1,
               updated_at: new Date().toISOString(),
             },
           ])
-          setError(null) // Clear error since we're showing example repos
-          return
+          setError(null)
         }
-
-        setRepos(data)
       } catch (err) {
         console.error("Error fetching repos:", err)
-        // Set example repos when there's an error
+        setError(err instanceof Error ? err.message : "Erro ao carregar repositórios")
+        // Set fallback repos even on error
         setRepos([
           {
             id: 1,
-            name: "discord-bot-template",
-            description: "Template completo para criação de bots Discord com comandos slash e eventos",
-            html_url: "#",
+            name: "discord-bot-advanced",
+            description: "Bot Discord avançado com comandos slash, sistema de economia e moderação automática",
+            html_url: "https://github.com/FelpsDeveloper3001",
             language: "JavaScript",
-            stargazers_count: 5,
-            forks_count: 2,
+            stargazers_count: 12,
+            forks_count: 4,
             updated_at: new Date().toISOString(),
           },
           {
             id: 2,
-            name: "fivem-scripts",
-            description: "Coleção de scripts úteis para servidores FiveM",
-            html_url: "#",
+            name: "fivem-roleplay-scripts",
+            description: "Coleção completa de scripts para servidores FiveM de roleplay",
+            html_url: "https://github.com/FelpsDeveloper3001",
             language: "Lua",
             stargazers_count: 8,
             forks_count: 3,
@@ -209,16 +310,15 @@ export default function Portfolio() {
           },
           {
             id: 3,
-            name: "mta-resources",
-            description: "Recursos e sistemas para MTA San Andreas",
-            html_url: "#",
+            name: "mta-racing-system",
+            description: "Sistema completo de corridas para MTA San Andreas com ranking e recompensas",
+            html_url: "https://github.com/FelpsDeveloper3001",
             language: "Lua",
-            stargazers_count: 3,
-            forks_count: 1,
+            stargazers_count: 6,
+            forks_count: 2,
             updated_at: new Date().toISOString(),
           },
         ])
-        setError(null) // Clear error since we're showing example repos
       } finally {
         setLoading(false)
       }
@@ -232,6 +332,38 @@ export default function Portfolio() {
     if (element) {
       element.scrollIntoView({ behavior: "smooth" })
       setMobileMenuOpen(false)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+
+    try {
+      // Use EmailJS directly
+      const emailjs = (window as any).emailjs
+
+      if (!emailjs) {
+        throw new Error("EmailJS não carregado")
+      }
+
+      await emailjs.send(
+        "service_wfj1nxj",
+        "template_4a6vtra",
+        {
+          from_name: formData.get("name"),
+          from_email: formData.get("email"),
+          message: formData.get("message"),
+          to_email: "felpsdeveloper@outlook.com",
+        },
+        "zhx90j2M0cKsx7yZm",
+      )
+
+      alert("Mensagem enviada com sucesso!")
+      e.currentTarget.reset()
+    } catch (error) {
+      console.error("Error:", error)
+      alert("Erro ao enviar mensagem. Tente novamente ou entre em contato diretamente.")
     }
   }
 
@@ -326,6 +458,30 @@ export default function Portfolio() {
     }
   }, [])
 
+  // Filter clients by category
+  useEffect(() => {
+    if (selectedCategory === "all") {
+      setFilteredClients(clients)
+    } else {
+      const filtered = clients.filter((client) => client.category === selectedCategory)
+      setFilteredClients(filtered)
+    }
+  }, [selectedCategory])
+
+  // Load EmailJS
+  useEffect(() => {
+    const script = document.createElement("script")
+    script.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"
+    script.onload = () => {
+      ;(window as any).emailjs.init("zhx90j2M0cKsx7yZm")
+    }
+    document.head.appendChild(script)
+
+    return () => {
+      document.head.removeChild(script)
+    }
+  }, [])
+
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden relative">
       {/* Custom Cursor */}
@@ -382,7 +538,7 @@ export default function Portfolio() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex space-x-8">
-              {["inicio", "sobre", "projetos", "tecnologias", "contato"].map((item, index) => (
+              {["inicio", "sobre", "clientes", "projetos", "tecnologias", "contato"].map((item, index) => (
                 <motion.button
                   key={item}
                   initial={{ opacity: 0, y: -20 }}
@@ -416,7 +572,7 @@ export default function Portfolio() {
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden py-4 border-t border-white/10"
             >
-              {["inicio", "sobre", "projetos", "tecnologias", "contato"].map((item) => (
+              {["inicio", "sobre", "clientes", "projetos", "tecnologias", "contato"].map((item) => (
                 <motion.button
                   key={item}
                   whileHover={{ x: 10 }}
@@ -635,7 +791,7 @@ export default function Portfolio() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-400">Experiência</span>
-                      <span className="text-white font-semibold">5+ anos</span>
+                      <span className="text-white font-semibold">2+ anos</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-400">Foco</span>
@@ -674,7 +830,7 @@ export default function Portfolio() {
               <div>
                 <h3 className="text-3xl font-bold text-white mb-4">Minha História</h3>
                 <p className="text-gray-300 leading-relaxed text-lg">
-                  Meu nome é Igor, mas todos me conhecem como Felps. Aos 16 anos, já tenho mais de 5 anos de experiência
+                  Meu nome é Igor, mas todos me conhecem como Felps. Aos 16 anos, já tenho mais de 2 anos de experiência
                   em desenvolvimento. Comecei criando pequenos scripts e hoje desenvolvo sistemas completos para
                   comunidades de jogos e servidores Discord.
                 </p>
@@ -722,6 +878,201 @@ export default function Portfolio() {
         </div>
       </section>
 
+      {/* Clients Section */}
+      <section id="clientes" className="py-32 px-6 bg-gradient-to-b from-gray-900/10 to-transparent">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-20"
+          >
+            <h2 className="text-5xl md:text-6xl font-bold mb-6">
+              <span className="bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                Clientes Satisfeitos
+              </span>
+            </h2>
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+              Depoimentos reais de clientes que confiaram no meu trabalho
+            </p>
+          </motion.div>
+
+          {/* Category Filter */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="flex flex-wrap justify-center gap-4 mb-16"
+          >
+            {clientCategories.map((category, index) => (
+              <motion.button
+                key={category.value}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSelectedCategory(category.value)}
+                className={`px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-2 ${
+                  selectedCategory === category.value
+                    ? `bg-gradient-to-r ${category.color} text-white shadow-lg`
+                    : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10"
+                }`}
+              >
+                <span className="text-lg">{category.icon}</span>
+                {category.name}
+              </motion.button>
+            ))}
+          </motion.div>
+
+          {/* Clients Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredClients.length > 0 ? (
+              filteredClients.map((client, index) => (
+                <motion.div
+                  key={client.id}
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                  whileHover={{ y: -10 }}
+                  className="group"
+                >
+                  <div className="bg-gradient-to-br from-gray-900/50 to-black/50 border border-white/10 rounded-3xl p-8 backdrop-blur-xl hover:border-white/20 transition-all duration-500 h-full flex flex-col">
+                    {/* Header */}
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="relative">
+                        <img
+                          src={client.avatar || "/placeholder.svg"}
+                          alt={client.name}
+                          className="w-16 h-16 rounded-2xl object-cover border-2 border-white/10"
+                        />
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-2 border-black flex items-center justify-center">
+                          <span className="text-xs">✓</span>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-white">{client.name}</h3>
+                        <p className="text-purple-400 font-medium">{client.company}</p>
+                        <p className="text-gray-400 text-sm">{client.role}</p>
+                      </div>
+                    </div>
+
+                    {/* Rating */}
+                    <div className="flex items-center gap-2 mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          size={16}
+                          className={`${i < client.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-600"}`}
+                        />
+                      ))}
+                      <span className="text-gray-400 text-sm ml-2">{client.date}</span>
+                    </div>
+
+                    {/* Testimonial */}
+                    <blockquote className="text-gray-300 leading-relaxed mb-6 flex-grow">
+                      "{client.testimonial}"
+                    </blockquote>
+
+                    {/* Project */}
+                    <div className="flex items-center justify-between">
+                      <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">{client.project}</Badge>
+                      <div className="flex items-center gap-1 text-yellow-400">
+                        <Star size={14} className="fill-yellow-400" />
+                        <span className="text-sm font-semibold">{client.rating}.0</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="col-span-full text-center py-16"
+              >
+                <div className="bg-gradient-to-br from-gray-900/50 to-black/50 border border-white/10 rounded-3xl p-12 backdrop-blur-xl max-w-2xl mx-auto">
+                  <div className="text-6xl mb-6">🎮</div>
+                  <h3 className="text-2xl font-bold text-white mb-4">
+                    Nenhum cliente encontrado para {selectedCategory === "fivem" ? "FiveM" : selectedCategory}
+                  </h3>
+                  <p className="text-gray-400 mb-6">
+                    {selectedCategory === "fivem" 
+                      ? "Ainda não temos depoimentos de clientes FiveM publicados. Em breve teremos novidades!"
+                      : "Ainda não temos depoimentos nesta categoria. Em breve teremos novidades!"
+                    }
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setSelectedCategory("all")}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
+                  >
+                    Ver Todos os Clientes
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            viewport={{ once: true }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20 max-w-4xl mx-auto"
+          >
+            {[
+              { label: "Clientes Satisfeitos", value: "15+", icon: "😊" },
+              { label: "Projetos Entregues", value: "15+", icon: "✅" },
+              { label: "Taxa de Satisfação", value: "100%", icon: "⭐" },
+              { label: "Suporte Pós-Venda", value: "24/7", icon: "🛠️" },
+            ].map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 + index * 0.1 }}
+                viewport={{ once: true }}
+                className="text-center group"
+              >
+                <div className="text-3xl mb-2">{stat.icon}</div>
+                <div className="text-2xl md:text-3xl font-bold text-white mb-1">{stat.value}</div>
+                <div className="text-sm text-gray-400">{stat.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            viewport={{ once: true }}
+            className="text-center mt-16"
+          >
+            <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-3xl p-8 max-w-2xl mx-auto">
+              <h3 className="text-2xl font-bold text-white mb-4">Quer ser o próximo cliente satisfeito?</h3>
+              <p className="text-gray-300 mb-6">Entre em contato e vamos transformar sua ideia em realidade!</p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => scrollToSection("contato")}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-2 mx-auto"
+              >
+                Solicitar Orçamento
+                <ArrowUpRight size={20} />
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Projects Section */}
       <section ref={projectsRef} id="projetos" className="py-32 px-6 bg-gradient-to-b from-transparent to-gray-900/20">
         <div className="max-w-7xl mx-auto">
@@ -750,18 +1101,6 @@ export default function Portfolio() {
                 className="w-12 h-12 border-2 border-purple-400 border-t-transparent rounded-full"
               />
             </div>
-          ) : error ? (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20">
-              <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 max-w-md mx-auto">
-                <p className="text-red-400 mb-4">Erro ao carregar projetos: {error}</p>
-                <Button
-                  onClick={() => window.location.reload()}
-                  className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300"
-                >
-                  Tentar Novamente
-                </Button>
-              </div>
-            </motion.div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {repos.map((repo, index) => (
@@ -829,10 +1168,10 @@ export default function Portfolio() {
             </div>
           )}
 
-          {repos.length === 0 && !loading && !error && (
+          {repos.length === 0 && !loading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
               <div className="bg-gray-800/20 border border-white/10 rounded-2xl p-8 max-w-md mx-auto">
-                <p className="text-gray-400">Nenhum repositório público encontrado.</p>
+                <p className="text-gray-400">Carregando projetos...</p>
               </div>
             </motion.div>
           )}
@@ -937,7 +1276,7 @@ export default function Portfolio() {
 
                   <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
                     <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                      <Mail className="w-5 h-5 text-purple-400" />
+                      <Mail className="w-5 h-5 text-white-400" />
                       Contato Alternativo
                     </h4>
                     <p className="text-gray-400 text-sm mb-4">
@@ -991,7 +1330,7 @@ export default function Portfolio() {
                       </div>
                       <div>
                         <span className="text-lg font-semibold text-white">{link.name}</span>
-                        <p className="text-gray-400 text-sm">Clique para conectar</p>
+                        <p className="text-gray-400 text-sm">Clique para entrar em contato</p>
                       </div>
                       <ArrowUpRight className="w-5 h-5 text-gray-400 ml-auto" />
                     </motion.a>
@@ -1024,7 +1363,7 @@ export default function Portfolio() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="text-center md:text-left">
               <p className="text-gray-400">
-                © {new Date().getFullYear()} Felps. Desenvolvido com <Heart className="w-4 h-4 text-red-400 inline mx-1" />
+                © 2024 Felps. Desenvolvido com <Heart className="w-4 h-4 text-red-400 inline mx-1" />
                 usando Next.js e Tailwind CSS
               </p>
             </div>
