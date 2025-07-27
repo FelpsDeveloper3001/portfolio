@@ -1363,7 +1363,7 @@ export default function Portfolio() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="text-center md:text-left">
               <p className="text-gray-400">
-                © 2024 Felps. Desenvolvido com <Heart className="w-4 h-4 text-red-400 inline mx-1" />
+                © 2025 Felps. Desenvolvido com <Heart className="w-4 h-4 text-red-400 inline mx-1" />
                 usando Next.js e Tailwind CSS
               </p>
             </div>
